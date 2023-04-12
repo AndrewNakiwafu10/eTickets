@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Linq.Expressions;
 
 namespace eTickets.Data.Base
 {
@@ -22,9 +23,12 @@ namespace eTickets.Data.Base
         public async Task DeleteAsync(int id)
         {
             var entity = await _context.Set<T>().FirstOrDefaultAsync(n => n.Id == id);
-            EntityEntry entityEntry = _context.Entry<T>(entity);
-            entityEntry.State = EntityState.Deleted;
-            await _context.SaveChangesAsync();
+            if (entity != null)
+            {
+                EntityEntry entityEntry = _context.Entry<T>(entity);
+                entityEntry.State = EntityState.Deleted;
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
@@ -33,11 +37,31 @@ namespace eTickets.Data.Base
             return result;
         }
 
+        public async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includeProperties)
+        {
+            IQueryable<T> query = _context.Set<T>();
+            query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
+            return await query.ToListAsync();
+
+        }
+
         public async Task<T> GetByIdAsync(int id)
         {
             var result = await _context.Set<T>().FirstOrDefaultAsync(n => n.Id == id);
+
+            if (result == null)
+            {
+                throw new Exception("Item not found.");
+            }
             return result;
         }
+        public async Task<T?> GetByIdAsync(int id, params Expression<Func<T, object>>[] includeProperties)
+        {
+            IQueryable<T> query = _context.Set<T>();
+            query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
+            return await query.FirstOrDefaultAsync(n => n.Id == id);
+        }
+
 
         public async Task UpdateAsync(int id, T entity)
         {
