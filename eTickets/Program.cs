@@ -13,6 +13,10 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectio
 
 //Services configuration
 builder.Services.AddScoped<IActorsService, ActorsService>();
+builder.Services.AddScoped<ICinemaService, CinemaService>();
+builder.Services.AddScoped<IMoviesService, MoviesService>();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
